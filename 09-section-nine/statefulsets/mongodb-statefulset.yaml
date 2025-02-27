@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: grade-submission
+spec:
+  selector:
+    matchLabels:
+      com.example.learning/instance: mongodb
+  serviceName: mongodb  # will create the service with following convention -> mongodb-0 mongodb-1 
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        com.example.learning/name: grade-submission
+        com.example.learning/component: database
+        com.example.learning/instance: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:4.4
+        envFrom:
+          - secretRef:
+              name: mongodb-secret
+        ports:
+        - containerPort: 27017
+          # name: web
+        volumeMounts:
+        - name: mongodb-persistent-storage
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-persistent-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
