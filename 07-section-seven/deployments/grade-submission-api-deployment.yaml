@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grade-submission-api
+  namespace: grade-submission
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      com.example.learning/instance: grade-submission-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 1 # this is to ensure that we do not have more that 3 replicas at a time
+  template:
+    metadata:
+      labels:
+        com.example.learning/name: grade-submission
+        com.example.learning/component: backend
+        com.example.learning/instance: grade-submission-api
+    spec:
+        containers:
+        - name: grade-submission-api
+          image: rslim087/kubernetes-course-grade-submission-api:stateless-v3
+          livenessProbe:
+            httpGet:
+              path: "/healthz"
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: "readyz"
+              port: 3000
+            initialDelaySeconds: 20 #not mandatorially required
+            periodSeconds: 5
+          env:
+            - name: MONGODB_HOST
+              value: mongodb
+            - name: MONGODB_PORT
+              value: "27017"
+            - name: MONGODB_USER
+              value: "admin"
+            - name: MONGODB_PASSWORD
+              value: "password123"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "128Mi"
+          ports:
+            - containerPort: 3000
